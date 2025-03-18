@@ -1,5 +1,4 @@
 name: Deploy Frontend
-
 on:
   push:
     branches:
@@ -9,16 +8,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-       
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - uses: actions/checkout@v3
+      - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - run: docker build -t dockertunka/frontend -f Dockerfile.dev .
+      - run: docker run -e CI=true dockertunka/frontend npm test
 
-      - name: Build Docker Image
-        run: docker build -t dockertunka/frontend-app -f Dockerfile.dev .
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
 
-      - name: Push Image to Docker Hub
-        run: docker push dockertunka/frontend-app
-
-  
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          application_name: docker-gh
+          environment_name: Dockergh-env
+          existing_bucket_name: elasticbeanstalk-us-east-1-923445559289
+          region: us-east-1
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
