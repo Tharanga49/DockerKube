@@ -21,18 +21,4 @@ jobs:
       - name: Push Image to Docker Hub
         run: docker push dockertunka/frontend-app
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build  # Wait for the build job to complete
-    steps:
-      - name: Deploy to AWS EC2
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker stop myapp || true
-            docker rm myapp || true
-            docker pull dockertunka/frontend-app
-            docker run -d -p 3000:3000 --name myapp dockertunka/frontend-app
+  
