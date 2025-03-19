@@ -9,12 +9,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      - run: docker build -t dockertunka/frontend -f Dockerfile.dev .
-      - run: docker run -e CI=true dockertunka/frontend npm test
+
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t dockertunka/frontend -f Dockerfile.dev .
+
+      - name: Run Tests
+        run: docker run -e CI=true dockertunka/frontend npm test
 
       - name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*'
+        run: zip -r deploy.zip . -x '*.git*' '*.github*' 'node_modules/*'
+
+      - name: Verify deployment package
+        run: ls -l deploy.zip
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v18
