@@ -43,7 +43,8 @@ jobs:
          environment_name: frontend-env
          existing_bucket_name: elasticbeanstalk-us-east-1-913524945617
          region: us-east-1
-         version_label: ${{ github.sha }}
+         version_label: ${{ github.sha }}-${{ github.run_number }}
+
          deployment_package: deploy.zip
          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
